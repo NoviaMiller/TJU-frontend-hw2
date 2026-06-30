@@ -186,7 +186,6 @@ onMounted(() => {
           <div>
             <span class="eyebrow">后台管理</span>
             <h1>内容与账户总览</h1>
-            <p>在一个视图里查看文章、草稿、普通用户状态和日常维护入口，适合古典文库内容的持续运营。</p>
           </div>
 
           <RouterLink class="primary-button" :to="{ name: 'admin-create' }">发布新文章</RouterLink>
@@ -221,7 +220,6 @@ onMounted(() => {
           <div>
             <span class="section-kicker">内容维护</span>
             <h2>文章管理</h2>
-            <p>搜索、筛选、预览和编辑保持在同一条工作流里，方便维护长文、专题与分类归档内容。</p>
           </div>
         </div>
 
@@ -245,11 +243,7 @@ onMounted(() => {
           <div v-for="index in 4" :key="index" class="table-skeleton__row" />
         </div>
 
-        <EmptyState
-          v-else-if="errorMessage"
-          title="加载失败"
-          :description="errorMessage"
-        />
+        <EmptyState v-else-if="errorMessage" title="加载失败" :description="errorMessage" />
 
         <div v-else-if="filteredPosts.length" class="table-shell table-shell--cards">
           <table class="post-table">
@@ -278,7 +272,8 @@ onMounted(() => {
                 </td>
                 <td data-label="分类">{{ post.category }}</td>
                 <td data-label="状态">
-                  <span class="status-dot" :class="post.status === 'published' ? 'status-dot--ok' : 'status-dot--muted'">
+                  <span class="status-dot"
+                    :class="post.status === 'published' ? 'status-dot--ok' : 'status-dot--muted'">
                     {{ post.status === 'published' ? '已发布' : '草稿' }}
                   </span>
                 </td>
@@ -292,12 +287,8 @@ onMounted(() => {
                     <RouterLink class="text-link" :to="{ name: 'admin-edit', params: { id: post.id } }">
                       编辑
                     </RouterLink>
-                    <button
-                      type="button"
-                      class="text-link text-link--danger"
-                      :disabled="deletingId === post.id"
-                      @click="removePost(post.id)"
-                    >
+                    <button type="button" class="text-link text-link--danger" :disabled="deletingId === post.id"
+                      @click="removePost(post.id)">
                       {{ deletingId === post.id ? '删除中...' : '删除' }}
                     </button>
                   </div>
@@ -307,11 +298,7 @@ onMounted(() => {
           </table>
         </div>
 
-        <EmptyState
-          v-else
-          title="当前没有匹配文章"
-          description="试试切换分类、清空搜索词，或者直接新增一篇导读文章。"
-        />
+        <EmptyState v-else title="当前没有匹配文章" description="试试切换分类、清空搜索词，或者直接新增一篇导读文章。" />
       </section>
 
       <section class="card-section card-section--dense">
@@ -319,7 +306,6 @@ onMounted(() => {
           <div>
             <span class="section-kicker">用户维护</span>
             <h2>普通用户管理</h2>
-            <p>管理员可以调整普通用户账号信息，并对停用或异常账号执行注销操作。</p>
           </div>
         </div>
 
@@ -338,11 +324,7 @@ onMounted(() => {
           <div v-for="index in 3" :key="index" class="table-skeleton__row" />
         </div>
 
-        <EmptyState
-          v-else-if="userErrorMessage"
-          title="用户列表加载失败"
-          :description="userErrorMessage"
-        />
+        <EmptyState v-else-if="userErrorMessage" title="用户列表加载失败" :description="userErrorMessage" />
 
         <div v-else-if="users.length" class="table-shell table-shell--cards">
           <table class="post-table">
@@ -378,28 +360,16 @@ onMounted(() => {
                 <td data-label="简介">{{ user.bio }}</td>
                 <td data-label="操作">
                   <div class="table-actions">
-                    <button
-                      type="button"
-                      class="text-link"
-                      :disabled="updatingUserId === user.id || user.status !== 'active'"
-                      @click="editUsername(user)"
-                    >
+                    <button type="button" class="text-link"
+                      :disabled="updatingUserId === user.id || user.status !== 'active'" @click="editUsername(user)">
                       改用户名
                     </button>
-                    <button
-                      type="button"
-                      class="text-link"
-                      :disabled="updatingUserId === user.id || user.status !== 'active'"
-                      @click="editPassword(user)"
-                    >
+                    <button type="button" class="text-link"
+                      :disabled="updatingUserId === user.id || user.status !== 'active'" @click="editPassword(user)">
                       改密码
                     </button>
-                    <button
-                      type="button"
-                      class="text-link text-link--danger"
-                      :disabled="updatingUserId === user.id || user.status !== 'active'"
-                      @click="disableUser(user)"
-                    >
+                    <button type="button" class="text-link text-link--danger"
+                      :disabled="updatingUserId === user.id || user.status !== 'active'" @click="disableUser(user)">
                       {{ updatingUserId === user.id ? '处理中...' : '注销' }}
                     </button>
                   </div>
@@ -409,11 +379,7 @@ onMounted(() => {
           </table>
         </div>
 
-        <EmptyState
-          v-else
-          title="当前没有普通用户"
-          description="可以先用登录页中的普通用户账号进入前台发表评论，再回到这里查看管理状态。"
-        />
+        <EmptyState v-else title="当前没有普通用户" description="可以先用登录页中的普通用户账号进入前台发表评论，再回到这里查看管理状态。" />
       </section>
     </section>
   </main>

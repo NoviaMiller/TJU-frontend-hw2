@@ -77,7 +77,6 @@ onMounted(() => {
         <div>
           <span class="section-kicker">内容目录</span>
           <h2>按门类、关键词和阅读动线浏览文章</h2>
-          <p>这里保留原来的文库浏览、搜索、分类筛选和文章入口能力，首页不再直接承载这些内容。</p>
         </div>
       </div>
 
@@ -85,22 +84,12 @@ onMounted(() => {
         <div class="filters-bar__main">
           <label class="search-box search-box--hero">
             <span>搜索文章</span>
-            <input
-              v-model="filters.q"
-              type="search"
-              placeholder="搜索标题、正文或标签关键词"
-            />
+            <input v-model="filters.q" type="search" placeholder="搜索标题、正文或标签关键词" />
           </label>
 
           <div class="category-strip category-strip--floating" role="tablist" aria-label="文章分类">
-            <button
-              v-for="category in categories"
-              :key="category"
-              type="button"
-              class="chip-button"
-              :class="{ 'chip-button--active': category === filters.category }"
-              @click="filters.category = category"
-            >
+            <button v-for="category in categories" :key="category" type="button" class="chip-button"
+              :class="{ 'chip-button--active': category === filters.category }" @click="filters.category = category">
               {{ category }}
             </button>
           </div>
@@ -117,11 +106,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <EmptyState
-        v-else-if="errorMessage"
-        title="加载失败"
-        :description="errorMessage"
-      />
+      <EmptyState v-else-if="errorMessage" title="加载失败" :description="errorMessage" />
 
       <template v-else-if="posts.length">
         <article v-if="heroPost" class="feature-card feature-card--luxe">
@@ -142,10 +127,8 @@ onMounted(() => {
                 <p>{{ heroPost.summary }}</p>
               </div>
 
-              <RouterLink
-                class="primary-button primary-button--with-orb"
-                :to="{ name: 'post-detail', params: { id: heroPost.id } }"
-              >
+              <RouterLink class="primary-button primary-button--with-orb"
+                :to="{ name: 'post-detail', params: { id: heroPost.id } }">
                 <span>查看详情</span>
                 <span class="button-orb" aria-hidden="true">→</span>
               </RouterLink>
@@ -157,18 +140,10 @@ onMounted(() => {
           <PostCard v-for="post in restPosts" :key="post.id" :post="post" />
         </div>
 
-        <PaginationBar
-          :page="pagination.page"
-          :total-pages="pagination.totalPages"
-          @change="filters.page = $event"
-        />
+        <PaginationBar :page="pagination.page" :total-pages="pagination.totalPages" @change="filters.page = $event" />
       </template>
 
-      <EmptyState
-        v-else
-        title="没有找到相关内容"
-        description="试试切换门类、减少关键词，或者从首页推荐开始阅读。"
-      />
+      <EmptyState v-else title="没有找到相关内容" description="试试切换门类、减少关键词，或者从首页推荐开始阅读。" />
     </section>
   </main>
 </template>

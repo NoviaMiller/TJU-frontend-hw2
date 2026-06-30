@@ -47,7 +47,6 @@ async function submitLogin() {
       <div class="auth-card">
         <span class="eyebrow">统一登录</span>
         <h1>登录古典文库 Wiki</h1>
-        <p>这是站点的统一登录入口。管理员登录后可进入后台维护文章，普通用户登录后可以参与阅读与评论。</p>
 
         <form class="auth-form" @submit.prevent="submitLogin">
           <label class="field">

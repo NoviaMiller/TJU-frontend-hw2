@@ -102,14 +102,11 @@ onBeforeUnmount(() => {
 
 <template>
   <main ref="rootSection" class="page-shell page-shell--home-story">
-    <section
-      class="home-story home-story--cover"
-      data-story-section="0"
-      :class="{ 'is-visible': activeStory.includes(0) }"
-    >
+    <section class="home-story home-story--cover" data-story-section="0"
+      :class="{ 'is-visible': activeStory.includes(0) }">
       <div class="container home-story__inner home-story__inner--cover home-story__inner--stagger">
         <div class="home-cover-copy">
-          <span class="eyebrow">首页叙事封面</span>
+          <span class="eyebrow">卷首语</span>
           <p class="home-cover-copy__lead">经典文献，系统整理，持续阅读</p>
           <h1 class="home-hero-title">
             <span class="home-hero-title__shadow" aria-hidden="true">汉语言 Wiki 系统</span>
@@ -141,17 +138,14 @@ onBeforeUnmount(() => {
             <span>从推荐、分类到全文评论保持完整链路</span>
           </div>
           <div class="home-cover-panel__note">
-            首页只负责讲清楚系统定位，真正的文章浏览与搜索通过按钮进入原有文库功能。
+            学习古汉语，分享古汉语知识的不二法门
           </div>
         </aside>
       </div>
     </section>
 
-    <section
-      class="home-story home-story--intro"
-      data-story-section="1"
-      :class="{ 'is-visible': activeStory.includes(1) }"
-    >
+    <section class="home-story home-story--intro" data-story-section="1"
+      :class="{ 'is-visible': activeStory.includes(1) }">
       <div class="container home-story__inner home-story__inner--intro home-story__inner--stagger">
         <div class="orbital-scene" aria-hidden="true">
           <div class="orbital-scene__halo orbital-scene__halo--outer" />
@@ -169,24 +163,21 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="home-intro-copy">
-          <span class="section-kicker">第二屏</span>
-          <h2>把课程资料整理成真正可搜索、可阅读、可持续维护的知识入口。</h2>
+          <span class="section-kicker">我们的优势</span>
+          <h2>课程资料变知识入口</h2>
           <p>
-            这里不是只放一批零散文章，而是先把资料组织方式说清楚，让用户一进入就知道它能长期沉淀、反复查阅，也适合后续继续扩展。
+            这里不是只放一批零散文章，而是把课程资料整理成真正可搜索、可阅读、可持续维护的知识入口。长期沉淀、反复查阅、后续扩展，不在话下
           </p>
         </div>
       </div>
     </section>
 
-    <section
-      class="home-story home-story--features"
-      data-story-section="2"
-      :class="{ 'is-visible': activeStory.includes(2) }"
-    >
+    <section class="home-story home-story--features" data-story-section="2"
+      :class="{ 'is-visible': activeStory.includes(2) }">
       <div class="container home-story__inner home-story__inner--features home-story__inner--stagger">
         <div class="home-features-copy">
-          <span class="section-kicker">第三屏</span>
-          <h2>读、找、谈，围绕经典文本形成完整的使用场景。</h2>
+          <span class="section-kicker">更多功能</span>
+          <h2>读、找、谈，全面完整的使用场景</h2>
 
           <ul class="feature-rail" aria-label="首页亮点">
             <li class="feature-rail__item">
@@ -220,14 +211,11 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <section
-      class="home-story home-story--closing"
-      data-story-section="3"
-      :class="{ 'is-visible': activeStory.includes(3) }"
-    >
+    <section class="home-story home-story--closing" data-story-section="3"
+      :class="{ 'is-visible': activeStory.includes(3) }">
       <div class="container home-story__inner home-story__inner--closing home-story__inner--stagger">
         <div class="home-closing-card">
-          <span class="section-kicker">第四屏</span>
+          <span class="section-kicker">卷尾语</span>
           <h2>更多内容，敬请期待</h2>
           <p>
             文库已经可以进入浏览，首页后续还会继续补充更完整的专题叙事、内容导览和展示细节，让入口既清晰又更有表达力。
