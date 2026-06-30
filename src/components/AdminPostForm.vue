@@ -177,14 +177,14 @@ async function submitForm() {
       <div class="section-heading">
         <div>
           <h2>基础信息</h2>
-          <p>先填写标题、摘要、分类与标签，让文章更容易被搜索和归档。</p>
+          <p>先填写标题、摘要、门类与标签，让文章更容易被检索和归档。</p>
         </div>
       </div>
 
       <div class="form-grid">
         <label class="field field--full">
           <span>文章标题</span>
-          <input v-model="form.title" type="text" maxlength="60" placeholder="例如：Vue 3 权限管理实践" />
+          <input v-model="form.title" type="text" maxlength="60" placeholder="例如：春风过杏坛：在《论语》里安顿日常的心" />
         </label>
 
         <label class="field field--full">
@@ -199,7 +199,7 @@ async function submitForm() {
 
         <label class="field">
           <span>分类</span>
-          <input v-model="form.category" type="text" placeholder="例如：前端开发" />
+          <input v-model="form.category" type="text" placeholder="例如：儒家经典" />
         </label>
 
         <label class="field">
@@ -219,7 +219,7 @@ async function submitForm() {
       <div class="section-heading">
         <div>
           <h2>内容编辑</h2>
-          <p>支持 Markdown 和富文本两种模式，适合课程资料和图文教程两类内容。</p>
+          <p>支持 Markdown 和富文本两种模式，适合经典导读、摘录评注与专题文章。</p>
         </div>
 
         <div class="format-switch">
@@ -269,7 +269,7 @@ async function submitForm() {
       <div class="section-heading">
         <div>
           <h2>发布设置</h2>
-          <p>上传封面、设置发布状态和置顶，后台列表会即时反映这些变化。</p>
+          <p>上传封面、设置发布状态和置顶，便于首页推荐与长期归档。</p>
         </div>
       </div>
 
@@ -278,9 +278,9 @@ async function submitForm() {
           <span>封面图上传</span>
           <label class="upload-box">
             <input type="file" accept="image/*" @change="handleFileChange" />
-            <span>{{ uploading ? '上传中...' : '选择图片并模拟上传' }}</span>
+            <span>{{ uploading ? '上传中...' : '选择图片并上传封面' }}</span>
           </label>
-          <small>当前返回的是 base64 URL，后续可替换为 MySQL + 文件服务。</small>
+          <small>当前演示环境会直接返回封面预览地址，后续可替换为真实上传服务。</small>
         </div>
 
         <div class="field">

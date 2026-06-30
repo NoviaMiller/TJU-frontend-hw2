@@ -9,8 +9,8 @@ const route = useRoute()
 const router = useRouter()
 
 const form = reactive({
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
 })
 
 const loading = ref(false)
@@ -21,15 +21,20 @@ async function submitLogin() {
   errorMessage.value = ''
 
   try {
-    await authStore.signIn({
+    const response = await authStore.signIn({
       username: form.username,
       password: form.password,
     })
 
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/admin/posts'
+    const redirect =
+      typeof route.query.redirect === 'string'
+        ? route.query.redirect
+        : response.user.role === 'admin'
+          ? '/admin/posts'
+          : '/'
     await router.push(redirect)
-  } catch {
-    errorMessage.value = '登录失败，请确认账号密码。可用账号：admin / admin123'
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '登录失败，请确认账号密码'
   } finally {
     loading.value = false
   }
@@ -40,9 +45,9 @@ async function submitLogin() {
   <main class="page-shell">
     <section class="container auth-shell">
       <div class="auth-card">
-        <span class="eyebrow">后台登录</span>
-        <h1>进入文章管理台</h1>
-        <p>演示账号已预置，管理员可发布、编辑、删除和置顶文章。</p>
+        <span class="eyebrow">统一登录</span>
+        <h1>登录古典文库 Wiki</h1>
+        <p>这是站点的统一登录入口。管理员登录后可进入后台维护文章，普通用户登录后可以参与阅读与评论。</p>
 
         <form class="auth-form" @submit.prevent="submitLogin">
           <label class="field">
@@ -58,13 +63,14 @@ async function submitLogin() {
           <span v-if="errorMessage" class="form-error">{{ errorMessage }}</span>
 
           <button class="primary-button" type="submit" :disabled="loading">
-            {{ loading ? '登录中...' : '登录后台' }}
+            {{ loading ? '登录中...' : '登录' }}
           </button>
         </form>
 
         <div class="auth-tips">
           <p><strong>管理员：</strong>admin / admin123</p>
-          <p><strong>普通用户：</strong>guest / guest123（仅浏览）</p>
+          <p><strong>读者账号：</strong>guest / guest123</p>
+          <p><strong>备用读者：</strong>yuki / yuki123，frontend / front123</p>
         </div>
       </div>
     </section>

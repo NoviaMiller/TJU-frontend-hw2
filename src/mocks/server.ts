@@ -13,15 +13,19 @@ import type {
   CommentInput,
   CommentsResponse,
   LoginPayload,
+  ManagedUser,
   Post,
   PostInput,
   PostsListResponse,
+  UpdateUserPasswordPayload,
+  UpdateUserProfilePayload,
   UploadResponse,
   User,
+  UsersResponse,
 } from '@/types'
 import { AxiosError as AxiosErrorCtor } from 'axios'
 
-const DB_KEY = 'wiki-system-mock-db'
+const DB_KEY = 'wiki-system-mock-db-v2'
 const TOKEN_PREFIX = 'mock-jwt'
 
 let memoryDatabase = createInitialDatabase()
@@ -34,8 +38,47 @@ function hasWindow() {
   return typeof window !== 'undefined'
 }
 
+function normalizeDatabase(database: Partial<MockDatabase> | null | undefined): MockDatabase {
+  const initialDatabase = createInitialDatabase()
+  const storedUsers = Array.isArray(database?.users) ? database.users : []
+  const nextUsers: MockDatabase['users'] = storedUsers.map((user) => ({
+    ...user,
+    status: user.status === 'cancelled' ? 'cancelled' : 'active',
+  }))
+
+  for (const initialUser of initialDatabase.users) {
+    if (!nextUsers.some((user) => user.id === initialUser.id)) {
+      nextUsers.push(initialUser)
+    }
+  }
+
+  const posts = Array.isArray(database?.posts) ? database.posts : initialDatabase.posts
+  const commentsSource = Array.isArray(database?.comments) ? database.comments : initialDatabase.comments
+  const comments = commentsSource.map((comment) => ({
+    ...comment,
+    authorId: typeof comment.authorId === 'number' ? comment.authorId : null,
+  }))
+  const nextPostId =
+    typeof database?.nextPostId === 'number'
+      ? database.nextPostId
+      : Math.max(0, ...posts.map((post) => post.id)) + 1
+  const nextCommentId =
+    typeof database?.nextCommentId === 'number'
+      ? database.nextCommentId
+      : Math.max(0, ...comments.map((comment) => comment.id)) + 1
+
+  return {
+    posts,
+    comments,
+    users: nextUsers,
+    nextPostId,
+    nextCommentId,
+  }
+}
+
 function loadDatabase() {
   if (!hasWindow()) {
+    memoryDatabase = normalizeDatabase(memoryDatabase)
     return cloneDatabase(memoryDatabase)
   }
 
@@ -48,9 +91,11 @@ function loadDatabase() {
     return cloneDatabase(initial)
   }
 
-  const parsed = JSON.parse(raw) as MockDatabase
-  memoryDatabase = cloneDatabase(parsed)
-  return parsed
+  const parsed = JSON.parse(raw) as Partial<MockDatabase>
+  const normalized = normalizeDatabase(parsed)
+  memoryDatabase = cloneDatabase(normalized)
+  window.localStorage.setItem(DB_KEY, JSON.stringify(normalized))
+  return normalized
 }
 
 function saveDatabase(database: MockDatabase) {
@@ -62,7 +107,7 @@ function saveDatabase(database: MockDatabase) {
 }
 
 function delay(ms = 220) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
+  return new Promise((resolve) => globalThis.setTimeout(resolve, ms))
 }
 
 function parseData<T>(config: AxiosRequestConfig) {
@@ -94,7 +139,7 @@ function makeToken(user: User) {
   const payload = JSON.stringify({
     sub: user.id,
     role: user.role,
-    name: user.name,
+    username: user.username,
     at: Date.now(),
   })
 
@@ -110,7 +155,7 @@ function parseToken(token: string | undefined) {
 
   try {
     const decoded = decodeURIComponent(escape(atob(payload)))
-    return JSON.parse(decoded) as { sub: number; role: User['role']; name: string }
+    return JSON.parse(decoded) as { sub: number; role: User['role']; username: string }
   } catch {
     return null
   }
@@ -125,7 +170,8 @@ function getCurrentUser(config: AxiosRequestConfig, database: MockDatabase) {
     return null
   }
 
-  return database.users.find((item) => item.id === payload.sub) ?? null
+  const user = database.users.find((item) => item.id === payload.sub) ?? null
+  return user?.status === 'active' ? user : null
 }
 
 function sanitizeUser(user: MockDatabase['users'][number]): User {
@@ -134,8 +180,19 @@ function sanitizeUser(user: MockDatabase['users'][number]): User {
     username: user.username,
     name: user.name,
     role: user.role,
+    status: user.status,
     bio: user.bio,
     avatar: user.avatar,
+  }
+}
+
+function makeManagedUser(
+  user: MockDatabase['users'][number],
+  database: MockDatabase,
+): ManagedUser {
+  return {
+    ...sanitizeUser(user),
+    commentCount: database.comments.filter((comment) => comment.authorId === user.id).length,
   }
 }
 
@@ -163,6 +220,56 @@ function normalizePostInput(payload: PostInput) {
   }
 }
 
+function requireAdmin(currentUser: MockDatabase['users'][number] | null) {
+  return currentUser?.role === 'admin'
+}
+
+function isAdminUser(
+  currentUser: MockDatabase['users'][number] | null,
+): currentUser is MockDatabase['users'][number] & { role: 'admin' } {
+  return currentUser?.role === 'admin'
+}
+
+function validateUsername(
+  username: string,
+  database: MockDatabase,
+  currentUserId?: number,
+) {
+  const normalizedUsername = username.trim()
+
+  if (!normalizedUsername) {
+    return '用户名不能为空'
+  }
+
+  if (normalizedUsername.length < 3) {
+    return '用户名至少需要 3 个字符'
+  }
+
+  const duplicatedUser = database.users.find(
+    (item) =>
+      item.id !== currentUserId &&
+      item.username.toLowerCase() === normalizedUsername.toLowerCase(),
+  )
+
+  if (duplicatedUser) {
+    return '用户名已存在，请更换一个新的用户名'
+  }
+
+  return ''
+}
+
+function validatePassword(password: string) {
+  if (!password.trim()) {
+    return '密码不能为空'
+  }
+
+  if (password.trim().length < 6) {
+    return '密码至少需要 6 位'
+  }
+
+  return ''
+}
+
 function makeResponse<T>(
   config: InternalAxiosRequestConfig,
   status: number,
@@ -173,10 +280,14 @@ function makeResponse<T>(
       ? 'OK'
       : status === 201
         ? 'Created'
+        : status === 400
+          ? 'Bad Request'
         : status === 401
           ? 'Unauthorized'
           : status === 403
             ? 'Forbidden'
+            : status === 409
+              ? 'Conflict'
             : status === 404
               ? 'Not Found'
               : 'Error'
@@ -209,6 +320,10 @@ export const mockAdapter: AxiosAdapter = async (config) => {
 
     if (!user) {
       return settleResponse(config, makeResponse(config, 401, { message: '用户名或密码错误' }))
+    }
+
+    if (user.status !== 'active') {
+      return settleResponse(config, makeResponse(config, 403, { message: '该账号已注销，无法继续登录' }))
     }
 
     const authResponse: AuthResponse = {
@@ -300,7 +415,7 @@ export const mockAdapter: AxiosAdapter = async (config) => {
   if (method === 'post' && url.pathname === '/posts') {
     const currentUser = getCurrentUser(config, database)
 
-    if (currentUser?.role !== 'admin') {
+    if (!isAdminUser(currentUser)) {
       return settleResponse(config, makeResponse(config, 401, { message: '仅管理员可发布文章' }))
     }
 
@@ -325,7 +440,7 @@ export const mockAdapter: AxiosAdapter = async (config) => {
   if (method === 'put' && postMatch) {
     const currentUser = getCurrentUser(config, database)
 
-    if (currentUser?.role !== 'admin') {
+    if (!isAdminUser(currentUser)) {
       return settleResponse(config, makeResponse(config, 401, { message: '仅管理员可编辑文章' }))
     }
 
@@ -350,7 +465,7 @@ export const mockAdapter: AxiosAdapter = async (config) => {
   if (method === 'delete' && postMatch) {
     const currentUser = getCurrentUser(config, database)
 
-    if (currentUser?.role !== 'admin') {
+    if (!requireAdmin(currentUser)) {
       return settleResponse(config, makeResponse(config, 401, { message: '仅管理员可删除文章' }))
     }
 
@@ -383,9 +498,14 @@ export const mockAdapter: AxiosAdapter = async (config) => {
   }
 
   if (method === 'post' && url.pathname === '/comments') {
+    const currentUser = getCurrentUser(config, database)
     const payload = parseData<CommentInput>(config)
 
-    if (!payload.author.trim() || !payload.content.trim()) {
+    if (!currentUser) {
+      return settleResponse(config, makeResponse(config, 401, { message: '请先登录后再发表评论' }))
+    }
+
+    if (!payload.content.trim()) {
       return settleResponse(config, makeResponse(config, 400, { message: '评论内容不能为空' }))
     }
 
@@ -398,7 +518,8 @@ export const mockAdapter: AxiosAdapter = async (config) => {
     const comment = {
       id: database.nextCommentId,
       postId: payload.postId,
-      author: payload.author.trim(),
+      authorId: currentUser.id,
+      author: currentUser.name,
       content: payload.content.trim(),
       createdAt: new Date().toISOString(),
     }
@@ -413,7 +534,7 @@ export const mockAdapter: AxiosAdapter = async (config) => {
   if (method === 'post' && url.pathname === '/upload') {
     const currentUser = getCurrentUser(config, database)
 
-    if (currentUser?.role !== 'admin') {
+    if (!requireAdmin(currentUser)) {
       return settleResponse(config, makeResponse(config, 401, { message: '仅管理员可上传图片' }))
     }
 
@@ -423,6 +544,124 @@ export const mockAdapter: AxiosAdapter = async (config) => {
     }
 
     return settleResponse(config, makeResponse(config, 200, uploadResponse))
+  }
+
+  if (method === 'get' && url.pathname === '/users') {
+    const currentUser = getCurrentUser(config, database)
+
+    if (!requireAdmin(currentUser)) {
+      return settleResponse(config, makeResponse(config, 403, { message: '仅管理员可查看用户列表' }))
+    }
+
+    const response: UsersResponse = {
+      items: [...database.users]
+        .filter((user) => user.role === 'viewer')
+        .sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === 'active' ? -1 : 1
+          }
+
+          return a.username.localeCompare(b.username)
+        })
+        .map((user) => makeManagedUser(user, database)),
+    }
+
+    return settleResponse(config, makeResponse(config, 200, response))
+  }
+
+  const userMatch = url.pathname.match(/^\/users\/(\d+)$/)
+
+  if (method === 'put' && userMatch) {
+    const currentUser = getCurrentUser(config, database)
+
+    if (!requireAdmin(currentUser)) {
+      return settleResponse(config, makeResponse(config, 403, { message: '仅管理员可修改普通用户' }))
+    }
+
+    const userId = Number(userMatch[1])
+    const targetUser = database.users.find((user) => user.id === userId && user.role === 'viewer')
+
+    if (!targetUser) {
+      return settleResponse(config, makeResponse(config, 404, { message: '普通用户不存在' }))
+    }
+
+    if (targetUser.status !== 'active') {
+      return settleResponse(config, makeResponse(config, 400, { message: '已注销账号不能再修改用户名' }))
+    }
+
+    const payload = parseData<UpdateUserProfilePayload>(config)
+    const validationMessage = validateUsername(payload.username, database, targetUser.id)
+
+    if (validationMessage) {
+      return settleResponse(config, makeResponse(config, 400, { message: validationMessage }))
+    }
+
+    targetUser.username = payload.username.trim()
+    database.comments = database.comments.map((comment) =>
+      comment.authorId === targetUser.id ? { ...comment, author: targetUser.name } : comment,
+    )
+    saveDatabase(database)
+
+    return settleResponse(config, makeResponse(config, 200, makeManagedUser(targetUser, database)))
+  }
+
+  const userPasswordMatch = url.pathname.match(/^\/users\/(\d+)\/password$/)
+
+  if (method === 'patch' && userPasswordMatch) {
+    const currentUser = getCurrentUser(config, database)
+
+    if (!requireAdmin(currentUser)) {
+      return settleResponse(config, makeResponse(config, 403, { message: '仅管理员可修改普通用户密码' }))
+    }
+
+    const userId = Number(userPasswordMatch[1])
+    const targetUser = database.users.find((user) => user.id === userId && user.role === 'viewer')
+
+    if (!targetUser) {
+      return settleResponse(config, makeResponse(config, 404, { message: '普通用户不存在' }))
+    }
+
+    if (targetUser.status !== 'active') {
+      return settleResponse(config, makeResponse(config, 400, { message: '已注销账号不能再修改密码' }))
+    }
+
+    const payload = parseData<UpdateUserPasswordPayload>(config)
+    const validationMessage = validatePassword(payload.password)
+
+    if (validationMessage) {
+      return settleResponse(config, makeResponse(config, 400, { message: validationMessage }))
+    }
+
+    targetUser.password = payload.password.trim()
+    saveDatabase(database)
+
+    return settleResponse(config, makeResponse(config, 200, makeManagedUser(targetUser, database)))
+  }
+
+  const userCancelMatch = url.pathname.match(/^\/users\/(\d+)\/cancel$/)
+
+  if (method === 'patch' && userCancelMatch) {
+    const currentUser = getCurrentUser(config, database)
+
+    if (!requireAdmin(currentUser)) {
+      return settleResponse(config, makeResponse(config, 403, { message: '仅管理员可注销普通用户' }))
+    }
+
+    const userId = Number(userCancelMatch[1])
+    const targetUser = database.users.find((user) => user.id === userId && user.role === 'viewer')
+
+    if (!targetUser) {
+      return settleResponse(config, makeResponse(config, 404, { message: '普通用户不存在' }))
+    }
+
+    if (targetUser.status === 'cancelled') {
+      return settleResponse(config, makeResponse(config, 400, { message: '该普通用户已经被注销' }))
+    }
+
+    targetUser.status = 'cancelled'
+    saveDatabase(database)
+
+    return settleResponse(config, makeResponse(config, 200, makeManagedUser(targetUser, database)))
   }
 
   return settleResponse(

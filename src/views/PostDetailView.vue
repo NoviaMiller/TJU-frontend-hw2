@@ -78,12 +78,17 @@ onMounted(() => {
 
 <template>
   <main class="page-shell">
-    <section class="container detail-shell">
-      <RouterLink class="text-link" :to="{ name: 'home' }">返回文章列表</RouterLink>
+    <section class="container detail-shell detail-shell--reading">
+      <RouterLink class="back-link" :to="{ name: 'home' }">← 返回文章列表</RouterLink>
 
-      <div v-if="loading" class="empty-state">
-        <strong>文章加载中</strong>
-        <p>正在展开正文与评论内容。</p>
+      <div v-if="loading" class="detail-loading">
+        <div class="detail-loading__cover" />
+        <div class="detail-loading__body">
+          <span class="skeleton-line skeleton-line--short" />
+          <span class="skeleton-line skeleton-line--title" />
+          <span class="skeleton-line" />
+          <span class="skeleton-line skeleton-line--wide" />
+        </div>
       </div>
 
       <EmptyState
@@ -93,26 +98,40 @@ onMounted(() => {
       />
 
       <template v-else-if="post">
-        <article class="detail-card">
-          <img class="detail-card__cover" :src="post.coverImage" :alt="post.title" />
+        <article class="detail-card detail-card--reading">
+          <div class="detail-card__masthead">
+            <div class="detail-card__header detail-card__header--reading">
+              <div class="detail-card__meta">
+                <span v-if="post.pinned" class="pill pill--accent">重点文章</span>
+                <span class="pill">{{ post.category }}</span>
+                <span>{{ formatDate(post.updatedAt) }}</span>
+                <span>{{ formatViews(post.views) }} 阅读</span>
+              </div>
 
-          <div class="detail-card__header">
-            <div class="detail-card__meta">
-              <span class="pill pill--accent" v-if="post.pinned">置顶文章</span>
-              <span class="pill">{{ post.category }}</span>
-              <span>{{ formatDate(post.updatedAt) }}</span>
-              <span>{{ formatViews(post.views) }} 阅读</span>
+              <div class="detail-card__title-group">
+                <h1>{{ post.title }}</h1>
+                <p>{{ post.summary }}</p>
+              </div>
+
+              <div class="detail-card__footnotes">
+                <span>作者 {{ post.authorName }}</span>
+                <div class="tag-list">
+                  <span v-for="tag in post.tags" :key="tag" class="pill pill--soft"># {{ tag }}</span>
+                </div>
+              </div>
             </div>
 
-            <h1>{{ post.title }}</h1>
-            <p>{{ post.summary }}</p>
-
-            <div class="tag-list">
-              <span v-for="tag in post.tags" :key="tag" class="pill pill--soft"># {{ tag }}</span>
-            </div>
+            <img class="detail-card__cover" :src="post.coverImage" :alt="post.title" />
           </div>
 
-          <div class="prose" v-html="renderedContent" />
+          <div class="detail-article-layout">
+            <aside class="detail-note">
+              <span class="section-kicker">阅读提示</span>
+              <p>这篇文章支持长期维护与分类归档，适合作为专题导读、经典摘读与持续整理的内容节点。</p>
+            </aside>
+
+            <div class="prose prose--reading" v-html="renderedContent" />
+          </div>
         </article>
 
         <CommentPanel

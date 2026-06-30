@@ -4,12 +4,16 @@ import type {
   CommentInput,
   CommentsResponse,
   LoginPayload,
+  ManagedUser,
   Post,
   PostInput,
   PostsListResponse,
   PostsQuery,
+  UpdateUserPasswordPayload,
+  UpdateUserProfilePayload,
   UploadResponse,
   User,
+  UsersResponse,
 } from '@/types'
 
 import { http } from '@/api/http'
@@ -62,6 +66,26 @@ export async function getComments(postId: number) {
 
 export async function createComment(payload: CommentInput) {
   const { data } = await http.post<Comment>('/comments', payload)
+  return data
+}
+
+export async function getUsers() {
+  const { data } = await http.get<UsersResponse>('/users')
+  return data
+}
+
+export async function updateUserProfile(id: number, payload: UpdateUserProfilePayload) {
+  const { data } = await http.put<ManagedUser>(`/users/${id}`, payload)
+  return data
+}
+
+export async function updateUserPassword(id: number, payload: UpdateUserPasswordPayload) {
+  const { data } = await http.patch<ManagedUser>(`/users/${id}/password`, payload)
+  return data
+}
+
+export async function cancelUser(id: number) {
+  const { data } = await http.patch<ManagedUser>(`/users/${id}/cancel`)
   return data
 }
 

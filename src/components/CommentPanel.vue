@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { createComment } from '@/api/services'
 import { formatDate } from '@/lib/format'
+import { useAuthStore } from '@/stores/auth'
 import type { Comment } from '@/types'
 
 const props = defineProps<{
@@ -15,19 +17,39 @@ const emit = defineEmits<{
   (event: 'submitted'): void
 }>()
 
+const authStore = useAuthStore()
+const router = useRouter()
+
 const form = reactive({
-  author: '',
   content: '',
 })
 
 const submitting = ref(false)
 const errorMessage = ref('')
 
+const commentHint = computed(() => {
+  if (!authStore.isAuthenticated) {
+    return '登录后即可参与讨论，系统会自动返回当前文章。'
+  }
+
+  return `当前将以 ${authStore.user?.name ?? authStore.user?.username ?? '当前用户'} 的身份发表评论。`
+})
+
 async function submitComment() {
   errorMessage.value = ''
 
-  if (!form.author.trim() || !form.content.trim()) {
-    errorMessage.value = '请先填写昵称和评论内容。'
+  if (!authStore.isAuthenticated) {
+    await router.push({
+      name: 'login',
+      query: {
+        redirect: `/posts/${props.postId}`,
+      },
+    })
+    return
+  }
+
+  if (!form.content.trim()) {
+    errorMessage.value = '请先填写评论内容。'
     return
   }
 
@@ -36,11 +58,9 @@ async function submitComment() {
   try {
     await createComment({
       postId: props.postId,
-      author: form.author,
       content: form.content,
     })
 
-    form.author = ''
     form.content = ''
     emit('submitted')
   } catch (error) {
@@ -53,42 +73,45 @@ async function submitComment() {
 
 <template>
   <section class="comment-panel card-section">
-    <div class="section-heading">
+    <div class="section-heading section-heading--stack">
       <div>
+        <span class="section-kicker">读者讨论</span>
         <h2>评论区</h2>
-        <p>{{ comments.length }} 条留言，游客也可以直接参与。</p>
+        <p>{{ comments.length }} 条留言。{{ commentHint }}</p>
       </div>
     </div>
 
     <form class="comment-form" @submit.prevent="submitComment">
-      <div class="form-grid form-grid--comment">
-        <label class="field">
-          <span>昵称</span>
-          <input v-model="form.author" type="text" maxlength="24" placeholder="例如：匿名同学" />
-        </label>
+      <label class="field field--full">
+        <span>评论内容</span>
+        <textarea
+          v-model="form.content"
+          rows="4"
+          maxlength="280"
+          :placeholder="
+            authStore.isAuthenticated
+              ? '写下你的读后感、补充出处或不同理解……'
+              : '登录后可以在这里写下你的读后感、补充出处或不同理解……'
+          "
+        />
+      </label>
 
-        <label class="field field--full">
-          <span>评论内容</span>
-          <textarea
-            v-model="form.content"
-            rows="4"
-            maxlength="280"
-            placeholder="写下你的想法、建议或补充资料..."
-          />
-        </label>
-      </div>
-
-      <div class="form-actions">
+      <div class="form-actions form-actions--comment">
         <span v-if="errorMessage" class="form-error">{{ errorMessage }}</span>
+        <span v-else class="form-hint">建议 1 到 3 句话，方便其他读者快速阅读。</span>
+
         <button class="primary-button" type="submit" :disabled="submitting">
-          {{ submitting ? '提交中...' : '发表评论' }}
+          {{ submitting ? '提交中...' : authStore.isAuthenticated ? '发表评论' : '登录后评论' }}
         </button>
       </div>
     </form>
 
-    <div v-if="loading" class="empty-state">
-      <strong>评论加载中</strong>
-      <p>正在同步最新留言。</p>
+    <div v-if="loading" class="comment-skeleton-list" aria-hidden="true">
+      <div v-for="index in 3" :key="index" class="comment-skeleton">
+        <span class="comment-skeleton__line comment-skeleton__line--short" />
+        <span class="comment-skeleton__line" />
+        <span class="comment-skeleton__line comment-skeleton__line--wide" />
+      </div>
     </div>
 
     <div v-else-if="comments.length" class="comment-list">
@@ -101,9 +124,10 @@ async function submitComment() {
       </article>
     </div>
 
-    <div v-else class="empty-state">
+    <div v-else class="empty-state empty-state--subtle">
+      <span class="empty-state__eyebrow">讨论尚未开始</span>
       <strong>还没有评论</strong>
-      <p>你可以成为第一个留言的人。</p>
+      <p>你可以成为第一位分享读后感、补充出处或提出问题的人。</p>
     </div>
   </section>
 </template>

@@ -1,5 +1,7 @@
 export type UserRole = 'admin' | 'viewer'
 
+export type UserStatus = 'active' | 'cancelled'
+
 export type PostFormat = 'markdown' | 'richtext'
 
 export type PostStatus = 'published' | 'draft'
@@ -9,8 +11,13 @@ export interface User {
   username: string
   name: string
   role: UserRole
+  status: UserStatus
   bio: string
   avatar: string
+}
+
+export interface ManagedUser extends User {
+  commentCount: number
 }
 
 export interface LoginPayload {
@@ -21,6 +28,18 @@ export interface LoginPayload {
 export interface AuthResponse {
   token: string
   user: User
+}
+
+export interface UsersResponse {
+  items: ManagedUser[]
+}
+
+export interface UpdateUserProfilePayload {
+  username: string
+}
+
+export interface UpdateUserPasswordPayload {
+  password: string
 }
 
 export interface Post {
@@ -76,6 +95,7 @@ export interface PostsListResponse {
 export interface Comment {
   id: number
   postId: number
+  authorId: number | null
   author: string
   content: string
   createdAt: string
@@ -83,7 +103,6 @@ export interface Comment {
 
 export interface CommentInput {
   postId: number
-  author: string
   content: string
 }
 

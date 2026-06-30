@@ -10,8 +10,76 @@ const themeStore = useThemeStore()
 const route = useRoute()
 const router = useRouter()
 
-const dashboardLink = computed(() =>
-  authStore.isAdmin ? { name: 'admin-dashboard' } : { name: 'admin-login' },
+type NavLink = {
+  label: string
+  to: { name: 'home' | 'library' | 'login' | 'admin-dashboard' }
+  active: boolean
+}
+
+const entryLink = computed(() => {
+  if (!authStore.isAuthenticated) {
+    return { name: 'login' as const }
+  }
+
+  if (authStore.isAdmin) {
+    return { name: 'admin-dashboard' as const }
+  }
+
+  return { name: 'home' as const }
+})
+
+const entryLabel = computed(() => {
+  if (!authStore.isAuthenticated) {
+    return '登录'
+  }
+
+  return authStore.isAdmin ? '后台管理' : '已登录'
+})
+
+const navLinks = computed<NavLink[]>(() => {
+  const links: NavLink[] = [
+    {
+      label: '首页',
+      to: { name: 'home' as const },
+      active: route.name === 'home',
+    },
+    {
+      label: '进入文库',
+      to: { name: 'library' as const },
+      active: route.name === 'library' || route.name === 'post-detail',
+    },
+  ]
+
+  if (!authStore.isAuthenticated) {
+    links.push({
+      label: '登录',
+      to: { name: 'login' as const },
+      active: route.name === 'login',
+    })
+
+    return links
+  }
+
+  if (authStore.isAdmin) {
+    links.push({
+      label: '后台管理',
+      to: { name: 'admin-dashboard' as const },
+      active:
+        route.name === 'admin-dashboard' ||
+        route.name === 'admin-create' ||
+        route.name === 'admin-edit',
+    })
+  }
+
+  return links
+})
+
+const themeButtonLabel = computed(() =>
+  themeStore.mode === 'light' ? '切换为暗色' : '切换为亮色',
+)
+
+const themeMetaLabel = computed(() =>
+  themeStore.mode === 'light' ? '当前亮色主题' : '当前暗色主题',
 )
 
 function handleLogout() {
@@ -28,35 +96,51 @@ function handleLogout() {
     <div class="container site-header__inner">
       <RouterLink class="brand" :to="{ name: 'home' }">
         <span class="brand__badge">W</span>
-        <span>
-          <strong>Wiki System</strong>
-          <small>课程知识库与后台管理</small>
+        <span class="brand__copy">
+          <strong>古典文库 Wiki</strong>
+          <small>先秦经典阅读与内容管理</small>
         </span>
       </RouterLink>
 
-      <nav class="site-nav">
-        <RouterLink class="site-nav__link" :to="{ name: 'home' }">前台首页</RouterLink>
-        <RouterLink class="site-nav__link" :to="dashboardLink">
-          {{ authStore.isAdmin ? '后台管理' : '管理员登录' }}
+      <nav class="site-nav" aria-label="主导航">
+        <RouterLink
+          v-for="link in navLinks"
+          :key="link.label"
+          class="site-nav__link"
+          :class="{ 'site-nav__link--active': link.active }"
+          :to="link.to"
+        >
+          {{ link.label }}
         </RouterLink>
       </nav>
 
       <div class="site-actions">
-        <button class="ghost-button" type="button" @click="themeStore.toggle()">
-          {{ themeStore.mode === 'light' ? '暗色模式' : '浅色模式' }}
+        <button
+          class="ghost-button ghost-button--meta"
+          type="button"
+          :aria-label="themeButtonLabel"
+          @click="themeStore.toggle()"
+        >
+          <span class="ghost-button__label">{{ themeButtonLabel }}</span>
+          <small>{{ themeMetaLabel }}</small>
         </button>
 
         <div v-if="authStore.user" class="user-chip">
           <img :src="authStore.user.avatar" :alt="authStore.user.name" />
-          <div>
+          <div class="user-chip__copy">
             <strong>{{ authStore.user.name }}</strong>
-            <small>{{ authStore.user.role === 'admin' ? '管理员' : '普通用户' }}</small>
+            <small>@{{ authStore.user.username }} · {{ authStore.displayRole }}</small>
           </div>
         </div>
 
         <button v-if="authStore.user" class="ghost-button" type="button" @click="handleLogout">
-          退出
+          退出登录
         </button>
+
+        <RouterLink v-else class="primary-button primary-button--compact primary-button--with-orb" :to="entryLink">
+          <span>{{ entryLabel }}</span>
+          <span class="button-orb" aria-hidden="true">→</span>
+        </RouterLink>
       </div>
     </div>
   </header>

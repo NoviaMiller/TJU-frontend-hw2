@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { pinia } from '@/stores/pinia'
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
+import LibraryView from '@/views/LibraryView.vue'
 import PostDetailView from '@/views/PostDetailView.vue'
 import AdminLoginView from '@/views/AdminLoginView.vue'
 import AdminDashboardView from '@/views/AdminDashboardView.vue'
@@ -16,7 +17,15 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: {
-        title: '课程 Wiki',
+        title: '首页',
+      },
+    },
+    {
+      path: '/library',
+      name: 'library',
+      component: LibraryView,
+      meta: {
+        title: '古典文库',
       },
     },
     {
@@ -28,11 +37,11 @@ const router = createRouter({
       },
     },
     {
-      path: '/admin/login',
-      name: 'admin-login',
+      path: '/login',
+      name: 'login',
       component: AdminLoginView,
       meta: {
-        title: '后台登录',
+        title: '登录',
       },
     },
     {
@@ -40,7 +49,7 @@ const router = createRouter({
       name: 'admin-dashboard',
       component: AdminDashboardView,
       meta: {
-        title: '文章管理',
+        title: '管理台',
         requiresAdmin: true,
       },
     },
@@ -71,14 +80,14 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
     return {
-      name: 'admin-login',
+      name: 'login',
       query: {
         redirect: to.fullPath,
       },
     }
   }
 
-  const title = typeof to.meta.title === 'string' ? `${to.meta.title} · Wiki System` : 'Wiki System'
+  const title = typeof to.meta.title === 'string' ? `${to.meta.title} · 古典文库 Wiki` : '古典文库 Wiki'
   document.title = title
 
   return true

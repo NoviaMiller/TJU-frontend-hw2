@@ -43,13 +43,13 @@ onMounted(() => {
         <div>
           <span class="eyebrow">后台编辑</span>
           <h1>{{ mode === 'create' ? '发布新文章' : '编辑现有文章' }}</h1>
-          <p>富文本和 Markdown 都可用，封面上传会先走模拟接口。</p>
+          <p>支持 Markdown 和富文本，适合发布经典导读、摘录评注与专题文章。</p>
         </div>
       </div>
 
       <div v-if="loading" class="empty-state">
         <strong>正在加载文章</strong>
-        <p>马上就好，编辑器正在准备内容。</p>
+        <p>编辑器正在准备稿件内容。</p>
       </div>
 
       <EmptyState

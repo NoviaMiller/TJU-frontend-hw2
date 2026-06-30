@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => Boolean(token.value))
   const isAdmin = computed(() => user.value?.role === 'admin')
+  const displayRole = computed(() => (user.value?.role === 'admin' ? '管理员' : '普通用户'))
 
   function hydrateToken() {
     if (typeof window === 'undefined') {
@@ -75,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
     initialized,
     isAuthenticated,
     isAdmin,
+    displayRole,
     ensureUserLoaded,
     signIn,
     signOut,
