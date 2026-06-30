@@ -52,12 +52,12 @@ async function submitLogin() {
         <form class="auth-form" @submit.prevent="submitLogin">
           <label class="field">
             <span>用户名</span>
-            <input v-model="form.username" type="text" placeholder="admin" />
+            <input v-model="form.username" type="text" placeholder="请输入用户名" />
           </label>
 
           <label class="field">
             <span>密码</span>
-            <input v-model="form.password" type="password" placeholder="admin123" />
+            <input v-model="form.password" type="password" placeholder="请输入密码" />
           </label>
 
           <span v-if="errorMessage" class="form-error">{{ errorMessage }}</span>
@@ -67,11 +67,7 @@ async function submitLogin() {
           </button>
         </form>
 
-        <div class="auth-tips">
-          <p><strong>管理员：</strong>admin / admin123</p>
-          <p><strong>读者账号：</strong>guest / guest123</p>
-          <p><strong>备用读者：</strong>yuki / yuki123，frontend / front123</p>
-        </div>
+
       </div>
     </section>
   </main>
