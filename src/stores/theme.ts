@@ -25,19 +25,24 @@ export const useThemeStore = defineStore('theme', () => {
     apply()
   }
 
-  function toggle() {
-    mode.value = mode.value === 'light' ? 'dark' : 'light'
+  function setMode(nextMode: 'light' | 'dark', persist = true) {
+    mode.value = nextMode
 
-    if (typeof window !== 'undefined') {
+    if (persist && typeof window !== 'undefined') {
       window.localStorage.setItem(THEME_KEY, mode.value)
     }
 
     apply()
   }
 
+  function toggle() {
+    setMode(mode.value === 'light' ? 'dark' : 'light')
+  }
+
   return {
     mode,
     hydrate,
+    setMode,
     toggle,
   }
 })

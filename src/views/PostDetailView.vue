@@ -116,7 +116,7 @@ onMounted(() => {
               <div class="detail-card__footnotes">
                 <span>作者 {{ post.authorName }}</span>
                 <div class="tag-list">
-                  <span v-for="tag in post.tags" :key="tag" class="pill pill--soft"># {{ tag }}</span>
+                  <span v-for="tag in post.tags" :key="tag" class="pill pill--tag"># {{ tag }}</span>
                 </div>
               </div>
             </div>

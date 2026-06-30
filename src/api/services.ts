@@ -3,6 +3,7 @@ import type {
   Comment,
   CommentInput,
   CommentsResponse,
+  CreateUserPayload,
   LoginPayload,
   ManagedUser,
   Post,
@@ -71,6 +72,11 @@ export async function createComment(payload: CommentInput) {
 
 export async function getUsers() {
   const { data } = await http.get<UsersResponse>('/users')
+  return data
+}
+
+export async function createUser(payload: CreateUserPayload) {
+  const { data } = await http.post<ManagedUser>('/users', payload)
   return data
 }
 

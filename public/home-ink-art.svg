@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 1180" fill="none">
+  <defs>
+    <filter id="paperBleed" x="-24%" y="-24%" width="148%" height="148%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="14" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.65"/>
+    </filter>
+    <filter id="softWash" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+    <filter id="edgeFeather" x="-18%" y="-18%" width="136%" height="136%">
+      <feGaussianBlur stdDeviation="3.6"/>
+    </filter>
+    <linearGradient id="ridgeInk" x1="200" y1="104" x2="760" y2="1066" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#141b22" stop-opacity="0.9"/>
+      <stop offset="0.4" stop-color="#222b34" stop-opacity="0.7"/>
+      <stop offset="0.74" stop-color="#4a5967" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#6b7885" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="riverMist" x1="182" y1="850" x2="754" y2="968" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#edf1f4" stop-opacity="0"/>
+      <stop offset="0.34" stop-color="#edf1f4" stop-opacity="0.46"/>
+      <stop offset="0.7" stop-color="#d9e1e8" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#edf1f4" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="mountainWashA" cx="0" cy="0" r="1" gradientTransform="translate(474 510) rotate(90) scale(424 316)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#161d24" stop-opacity="0.72"/>
+      <stop offset="0.34" stop-color="#222b33" stop-opacity="0.48"/>
+      <stop offset="0.7" stop-color="#526171" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#526171" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mountainWashB" cx="0" cy="0" r="1" gradientTransform="translate(294 742) rotate(90) scale(314 246)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171e26" stop-opacity="0.46"/>
+      <stop offset="0.54" stop-color="#394551" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#394551" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mountainWashC" cx="0" cy="0" r="1" gradientTransform="translate(684 360) rotate(90) scale(196 162)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f272f" stop-opacity="0.32"/>
+      <stop offset="0.7" stop-color="#52606d" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#52606d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloudMistA" cx="0" cy="0" r="1" gradientTransform="translate(538 430) rotate(90) scale(372 302)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a0acb7" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#a0acb7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cloudMistB" cx="0" cy="0" r="1" gradientTransform="translate(328 916) rotate(90) scale(214 164)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7d8790" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#7d8790" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#softWash)">
+    <ellipse cx="544" cy="432" rx="304" ry="248" fill="url(#cloudMistA)"/>
+    <ellipse cx="324" cy="918" rx="206" ry="152" fill="url(#cloudMistB)"/>
+  </g>
+
+  <g filter="url(#paperBleed)">
+    <path
+      d="M468 132C584 192 672 286 694 404C714 512 654 618 616 694C580 766 594 844 626 922C648 978 686 1024 734 1062C604 1106 420 1110 278 1032C296 950 346 882 344 794C342 708 280 666 250 594C220 526 214 444 246 360C278 276 348 194 468 132Z"
+      fill="url(#mountainWashA)"
+    />
+    <path
+      d="M254 664C334 694 418 756 450 830C480 900 466 984 420 1062C326 1068 240 1032 176 962C184 902 218 852 236 800C254 748 250 700 254 664Z"
+      fill="url(#mountainWashB)"
+    />
+    <path
+      d="M596 214C666 214 734 252 784 308C786 364 760 416 716 446C664 430 620 396 588 348C580 298 586 252 596 214Z"
+      fill="url(#mountainWashC)"
+    />
+  </g>
+
+  <g filter="url(#edgeFeather)">
+    <path
+      d="M164 884C278 840 388 836 510 872C620 904 706 904 808 870"
+      stroke="url(#riverMist)"
+      stroke-width="26"
+      stroke-linecap="round"
+      stroke-opacity="0.82"
+    />
+  </g>
+
+  <g stroke="url(#ridgeInk)" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M260 1034C322 928 406 792 450 640C490 500 486 336 468 176" stroke-width="38" stroke-opacity="0.54"/>
+    <path d="M312 980C358 902 414 824 450 734C490 636 500 554 550 462C590 388 652 330 732 288" stroke-width="22" stroke-opacity="0.34"/>
+    <path d="M244 870C284 844 322 824 362 782C406 734 426 660 434 600" stroke-width="16" stroke-opacity="0.3"/>
+    <path d="M434 218C478 284 514 346 530 418C548 494 540 572 566 654C594 746 652 818 724 886" stroke-width="14" stroke-opacity="0.28"/>
+    <path d="M568 312C630 296 706 308 770 352" stroke-width="8" stroke-opacity="0.22"/>
+    <path d="M198 872C266 862 340 864 406 888C474 914 532 946 592 950" stroke-width="9" stroke-opacity="0.18"/>
+    <path d="M488 134C498 192 500 242 494 292C490 342 476 380 470 420" stroke-width="8" stroke-opacity="0.44"/>
+  </g>
+
+  <g fill="#1b2229">
+    <circle cx="246" cy="250" r="18" fill-opacity="0.18"/>
+    <circle cx="214" cy="284" r="7" fill-opacity="0.16"/>
+    <circle cx="272" cy="300" r="5" fill-opacity="0.2"/>
+    <circle cx="664" cy="206" r="12" fill-opacity="0.16"/>
+    <circle cx="718" cy="238" r="8" fill-opacity="0.14"/>
+    <circle cx="766" cy="274" r="5" fill-opacity="0.14"/>
+    <circle cx="246" cy="930" r="12" fill-opacity="0.14"/>
+    <circle cx="224" cy="966" r="7" fill-opacity="0.16"/>
+    <circle cx="198" cy="996" r="4" fill-opacity="0.14"/>
+  </g>
+
+  <g stroke="#202830" stroke-linecap="round" stroke-opacity="0.18">
+    <path d="M530 876C560 912 590 942 642 974" stroke-width="4"/>
+    <path d="M574 900C610 930 650 956 704 980" stroke-width="3"/>
+    <path d="M286 914C314 892 336 866 360 832" stroke-width="3"/>
+  </g>
+</svg>

@@ -12,6 +12,7 @@ import type {
   AuthResponse,
   CommentInput,
   CommentsResponse,
+  CreateUserPayload,
   LoginPayload,
   ManagedUser,
   Post,
@@ -66,6 +67,10 @@ function normalizeDatabase(database: Partial<MockDatabase> | null | undefined): 
     typeof database?.nextCommentId === 'number'
       ? database.nextCommentId
       : Math.max(0, ...comments.map((comment) => comment.id)) + 1
+  const nextUserId =
+    typeof database?.nextUserId === 'number'
+      ? database.nextUserId
+      : Math.max(0, ...nextUsers.map((user) => user.id)) + 1
 
   return {
     posts,
@@ -73,6 +78,7 @@ function normalizeDatabase(database: Partial<MockDatabase> | null | undefined): 
     users: nextUsers,
     nextPostId,
     nextCommentId,
+    nextUserId,
   }
 }
 
@@ -268,6 +274,24 @@ function validatePassword(password: string) {
   }
 
   return ''
+}
+
+function validateDisplayName(name: string) {
+  const normalizedName = name.trim()
+
+  if (!normalizedName) {
+    return '显示名不能为空'
+  }
+
+  if (normalizedName.length < 2) {
+    return '显示名至少需要 2 个字符'
+  }
+
+  return ''
+}
+
+function normalizeBio(bio: string) {
+  return bio.trim()
 }
 
 function makeResponse<T>(
@@ -567,6 +591,50 @@ export const mockAdapter: AxiosAdapter = async (config) => {
     }
 
     return settleResponse(config, makeResponse(config, 200, response))
+  }
+
+  if (method === 'post' && url.pathname === '/users') {
+    const currentUser = getCurrentUser(config, database)
+
+    if (!requireAdmin(currentUser)) {
+      return settleResponse(config, makeResponse(config, 403, { message: '仅管理员可新增普通用户' }))
+    }
+
+    const payload = parseData<CreateUserPayload>(config)
+    const usernameMessage = validateUsername(payload.username, database)
+
+    if (usernameMessage) {
+      return settleResponse(config, makeResponse(config, 400, { message: usernameMessage }))
+    }
+
+    const passwordMessage = validatePassword(payload.password)
+
+    if (passwordMessage) {
+      return settleResponse(config, makeResponse(config, 400, { message: passwordMessage }))
+    }
+
+    const nameMessage = validateDisplayName(payload.name)
+
+    if (nameMessage) {
+      return settleResponse(config, makeResponse(config, 400, { message: nameMessage }))
+    }
+
+    const nextUser = {
+      id: database.nextUserId,
+      username: payload.username.trim(),
+      password: payload.password.trim(),
+      name: payload.name.trim(),
+      role: 'viewer' as const,
+      status: 'active' as const,
+      bio: normalizeBio(payload.bio),
+      avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(payload.name.trim())}`,
+    }
+
+    database.users.push(nextUser)
+    database.nextUserId += 1
+    saveDatabase(database)
+
+    return settleResponse(config, makeResponse(config, 201, makeManagedUser(nextUser, database)))
   }
 
   const userMatch = url.pathname.match(/^\/users\/(\d+)$/)

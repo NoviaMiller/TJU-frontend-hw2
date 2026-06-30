@@ -34,6 +34,13 @@ export interface UsersResponse {
   items: ManagedUser[]
 }
 
+export interface CreateUserPayload {
+  username: string
+  password: string
+  name: string
+  bio: string
+}
+
 export interface UpdateUserProfilePayload {
   username: string
 }

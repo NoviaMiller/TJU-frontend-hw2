@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { QuillEditor } from '@vueup/vue-quill'
+import { marked } from 'marked'
 import { useRouter } from 'vue-router'
 
 import { createPost, updatePost, uploadCover } from '@/api/services'
@@ -27,6 +28,8 @@ const form = reactive<PostInput>({
   pinned: false,
 })
 
+const markdownContent = ref('')
+const richtextContent = ref('')
 const tagText = ref('')
 const saving = ref(false)
 const uploading = ref(false)
@@ -46,6 +49,14 @@ const editorOptions = {
     ],
   },
 }
+
+const renderedMarkdownPreview = computed(() => {
+  if (!markdownContent.value.trim()) {
+    return ''
+  }
+
+  return marked.parse(markdownContent.value) as string
+})
 
 const submitLabel = computed(() => {
   if (saving.value) {
@@ -68,6 +79,8 @@ watch(
       form.coverImage = ''
       form.status = 'published'
       form.pinned = false
+      markdownContent.value = ''
+      richtextContent.value = ''
       tagText.value = ''
       return
     }
@@ -82,9 +95,22 @@ watch(
     form.status = post.status
     form.pinned = post.pinned
     tagText.value = joinTags(post.tags)
+
+    if (post.format === 'markdown') {
+      markdownContent.value = post.content
+      richtextContent.value = ''
+      return
+    }
+
+    richtextContent.value = post.content
+    markdownContent.value = ''
   },
   { immediate: true },
 )
+
+function getCurrentContent() {
+  return form.format === 'markdown' ? markdownContent.value : richtextContent.value
+}
 
 function validate() {
   if (!form.title.trim()) {
@@ -99,7 +125,7 @@ function validate() {
     return '分类不能为空'
   }
 
-  if (!form.content.trim()) {
+  if (!getCurrentContent().trim()) {
     return '正文不能为空'
   }
 
@@ -147,6 +173,7 @@ async function handleFileChange(event: Event) {
 
 async function submitForm() {
   syncTags()
+  form.content = getCurrentContent().trim()
   errorMessage.value = validate()
 
   if (errorMessage.value) {
@@ -156,10 +183,15 @@ async function submitForm() {
   saving.value = true
 
   try {
+    const payload = {
+      ...form,
+      content: form.content,
+    }
+
     if (props.mode === 'create') {
-      await createPost({ ...form })
+      await createPost(payload)
     } else if (props.post) {
-      await updatePost(props.post.id, { ...form })
+      await updatePost(props.post.id, payload)
     }
 
     await router.push({ name: 'admin-dashboard' })
@@ -177,7 +209,7 @@ async function submitForm() {
       <div class="section-heading">
         <div>
           <h2>基础信息</h2>
-          <p>先填写标题、摘要、门类与标签，让文章更容易被检索和归档。</p>
+          <p>先补齐标题、摘要、分类和标签，方便文章被检索、归档和展示。</p>
         </div>
       </div>
 
@@ -189,12 +221,7 @@ async function submitForm() {
 
         <label class="field field--full">
           <span>摘要</span>
-          <textarea
-            v-model="form.summary"
-            rows="3"
-            maxlength="140"
-            placeholder="用 1~2 句话概括这篇文章最核心的价值。"
-          />
+          <textarea v-model="form.summary" rows="3" maxlength="140" placeholder="用 1~2 句话概括这篇文章最核心的价值。" />
         </label>
 
         <label class="field">
@@ -204,13 +231,7 @@ async function submitForm() {
 
         <label class="field">
           <span>标签</span>
-          <input
-            v-model="tagText"
-            type="text"
-            placeholder="多个标签用逗号分隔"
-            @change="syncTags"
-            @blur="syncTags"
-          />
+          <input v-model="tagText" type="text" placeholder="多个标签用逗号分隔" @change="syncTags" @blur="syncTags" />
         </label>
       </div>
     </section>
@@ -219,49 +240,46 @@ async function submitForm() {
       <div class="section-heading">
         <div>
           <h2>内容编辑</h2>
-          <p>支持 Markdown 和富文本两种模式，适合经典导读、摘录评注与专题文章。</p>
+          <p>Markdown 和富文本彼此隔离，发布时选择当前使用的格式即可。</p>
         </div>
 
         <div class="format-switch">
-          <button
-            type="button"
-            class="ghost-button"
-            :class="{ 'ghost-button--active': form.format === 'markdown' }"
-            @click="setFormat('markdown')"
-          >
+          <button type="button" class="ghost-button" :class="{ 'ghost-button--active': form.format === 'markdown' }"
+            @click="setFormat('markdown')">
             Markdown
           </button>
-          <button
-            type="button"
-            class="ghost-button"
-            :class="{ 'ghost-button--active': form.format === 'richtext' }"
-            @click="setFormat('richtext')"
-          >
+          <button type="button" class="ghost-button" :class="{ 'ghost-button--active': form.format === 'richtext' }"
+            @click="setFormat('richtext')">
             富文本
           </button>
         </div>
       </div>
 
-      <label v-if="form.format === 'markdown'" class="field field--full">
-        <span>正文内容</span>
-        <textarea
-          v-model="form.content"
-          rows="16"
-          class="editor-textarea"
-          placeholder="使用 Markdown 书写正文..."
-        />
-      </label>
+      <p class="editor-mode-tip">
+        两种格式互不转换，切换只会更换当前编辑器，不会修改另一种格式下的内容。
+      </p>
+
+      <div v-if="form.format === 'markdown'" class="editor-workbench">
+        <label class="field editor-pane">
+          <span>Markdown 原文</span>
+          <textarea v-model="markdownContent" rows="16" class="editor-textarea" placeholder="使用 Markdown 书写正文..." />
+        </label>
+
+        <section class="editor-preview" aria-label="Markdown 实时预览">
+          <div class="editor-preview__header">
+            <span>实时预览</span>
+            <small>按 Markdown 语法渲染</small>
+          </div>
+
+          <div v-if="markdownContent.trim()" class="prose editor-preview__body" v-html="renderedMarkdownPreview" />
+          <p v-else class="editor-preview__empty">开始输入后，这里会实时显示渲染结果。</p>
+        </section>
+      </div>
 
       <label v-else class="field field--full">
-        <span>正文内容</span>
-        <QuillEditor
-          v-model:content="form.content"
-          content-type="html"
-          theme="snow"
-          toolbar="full"
-          :options="editorOptions"
-          class="quill-shell"
-        />
+        <span>富文本内容</span>
+        <QuillEditor v-model:content="richtextContent" content-type="html" theme="snow" toolbar="full"
+          :options="editorOptions" class="quill-shell" />
       </label>
     </section>
 
@@ -269,7 +287,6 @@ async function submitForm() {
       <div class="section-heading">
         <div>
           <h2>发布设置</h2>
-          <p>上传封面、设置发布状态和置顶，便于首页推荐与长期归档。</p>
         </div>
       </div>
 
@@ -280,7 +297,6 @@ async function submitForm() {
             <input type="file" accept="image/*" @change="handleFileChange" />
             <span>{{ uploading ? '上传中...' : '选择图片并上传封面' }}</span>
           </label>
-          <small>当前演示环境会直接返回封面预览地址，后续可替换为真实上传服务。</small>
         </div>
 
         <div class="field">

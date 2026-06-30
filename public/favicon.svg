@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>古典文库 Wiki</title>
+  <defs>
+    <linearGradient id="badge-base" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f28c52" />
+      <stop offset="1" stop-color="#4f8f80" />
+    </linearGradient>
+    <linearGradient id="badge-sheen" x1="16" y1="12" x2="42" y2="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="52" height="52" rx="18" fill="url(#badge-base)" />
+  <rect x="6" y="6" width="52" height="52" rx="18" fill="url(#badge-sheen)" />
+  <path
+    d="M16 18l6.5 0 6.1 22.3L32 29.6l3.5 10.7L41.6 18H48l-9.4 28h-6.1L32 34.5 28.6 46h-6.1L16 18z"
+    fill="#fff8f2"
+  />
+</svg>

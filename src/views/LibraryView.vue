@@ -7,6 +7,14 @@ import PaginationBar from '@/components/PaginationBar.vue'
 import PostCard from '@/components/PostCard.vue'
 import type { Post } from '@/types'
 
+const PAGE_ROWS = 3
+const POSTS_PER_ROW = 3
+
+type PageGroup = {
+  pinned: Post[]
+  regular: Post[]
+}
+
 const loading = ref(false)
 const errorMessage = ref('')
 const posts = ref<Post[]>([])
@@ -16,18 +24,63 @@ const filters = reactive({
   q: '',
   category: '全部',
   page: 1,
-  pageSize: 6,
+  pageSize: PAGE_ROWS,
 })
 
 const pagination = reactive({
   page: 1,
-  pageSize: 6,
+  pageSize: PAGE_ROWS,
   total: 0,
   totalPages: 1,
 })
 
-const heroPost = computed(() => posts.value[0] ?? null)
-const restPosts = computed(() => posts.value.slice(1))
+const pageGroups = computed<PageGroup[]>(() => {
+  const pinnedQueue = posts.value.filter((post) => post.pinned)
+  const regularQueue = posts.value.filter((post) => !post.pinned)
+  const groups: PageGroup[] = []
+  let pinnedIndex = 0
+  let regularIndex = 0
+
+  while (pinnedIndex < pinnedQueue.length || regularIndex < regularQueue.length) {
+    const group: PageGroup = {
+      pinned: [],
+      regular: [],
+    }
+    let remainingRows = PAGE_ROWS
+
+    while (remainingRows > 0 && pinnedIndex < pinnedQueue.length) {
+      const pinnedPost = pinnedQueue[pinnedIndex]
+
+      if (!pinnedPost) {
+        break
+      }
+
+      group.pinned.push(pinnedPost)
+      pinnedIndex += 1
+      remainingRows -= 1
+    }
+
+    if (remainingRows > 0 && regularIndex < regularQueue.length) {
+      const takeCount = Math.min(remainingRows * POSTS_PER_ROW, regularQueue.length - regularIndex)
+      group.regular = regularQueue.slice(regularIndex, regularIndex + takeCount)
+      regularIndex += takeCount
+    }
+
+    groups.push(group)
+  }
+
+  return groups
+})
+
+const currentPageGroup = computed<PageGroup>(() => {
+  return pageGroups.value[filters.page - 1] ?? {
+    pinned: [],
+    regular: [],
+  }
+})
+
+const pinnedPosts = computed(() => currentPageGroup.value.pinned)
+const restPosts = computed(() => currentPageGroup.value.regular)
 
 async function loadPosts() {
   loading.value = true
@@ -35,15 +88,26 @@ async function loadPosts() {
 
   try {
     const response = await getPosts({
-      page: filters.page,
-      pageSize: filters.pageSize,
+      page: 1,
+      pageSize: 999,
       q: filters.q,
       category: filters.category === '全部' ? '' : filters.category,
     })
 
     posts.value = response.items
     categories.value = ['全部', ...response.categories]
-    Object.assign(pagination, response.pagination)
+    const totalPages = Math.max(pageGroups.value.length, 1)
+
+    if (filters.page > totalPages) {
+      filters.page = totalPages
+    }
+
+    Object.assign(pagination, {
+      page: filters.page,
+      pageSize: PAGE_ROWS,
+      total: response.pagination.total,
+      totalPages,
+    })
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '文章加载失败'
   } finally {
@@ -55,13 +119,14 @@ watch(
   () => [filters.category, filters.q],
   () => {
     filters.page = 1
+    void loadPosts()
   },
 )
 
 watch(
-  () => [filters.page, filters.category, filters.q],
-  () => {
-    void loadPosts()
+  () => filters.page,
+  (page) => {
+    pagination.page = page
   },
 )
 
@@ -109,7 +174,7 @@ onMounted(() => {
       <EmptyState v-else-if="errorMessage" title="加载失败" :description="errorMessage" />
 
       <template v-else-if="posts.length">
-        <article v-if="heroPost" class="feature-card feature-card--luxe">
+        <article v-for="heroPost in pinnedPosts" :key="heroPost.id" class="feature-card feature-card--luxe">
           <div class="feature-card__frame">
             <img class="feature-card__image" :src="heroPost.coverImage" :alt="heroPost.title" />
           </div>

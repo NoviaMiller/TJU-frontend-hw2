@@ -16,6 +16,8 @@ type NavLink = {
   active: boolean
 }
 
+const isHomeRoute = computed(() => route.name === 'home')
+
 const entryLink = computed(() => {
   if (!authStore.isAuthenticated) {
     return { name: 'login' as const }
@@ -93,7 +95,7 @@ function handleLogout() {
 
 <template>
   <header class="site-header">
-    <div class="container site-header__inner">
+    <div class="container site-header__inner" :class="{ 'site-header__inner--home': isHomeRoute }">
       <RouterLink class="brand" :to="{ name: 'home' }">
         <span class="brand__badge">W</span>
         <span class="brand__copy">
@@ -114,7 +116,7 @@ function handleLogout() {
         </RouterLink>
       </nav>
 
-      <div class="site-actions">
+      <div v-if="!isHomeRoute" class="site-actions">
         <button
           class="ghost-button ghost-button--meta"
           type="button"

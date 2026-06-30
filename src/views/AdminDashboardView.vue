@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 
 import {
   cancelUser,
+  createUser,
   deletePost,
   getPosts,
   getUsers,
@@ -12,16 +13,26 @@ import {
 } from '@/api/services'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatDate, formatViews } from '@/lib/format'
-import type { ManagedUser, Post } from '@/types'
+import type { CreateUserPayload, ManagedUser, Post } from '@/types'
 
 const loading = ref(false)
 const userLoading = ref(false)
 const errorMessage = ref('')
-const userErrorMessage = ref('')
+const userListErrorMessage = ref('')
+const userActionErrorMessage = ref('')
+const userSuccessMessage = ref('')
 const deletingId = ref<number | null>(null)
 const updatingUserId = ref<number | null>(null)
+const creatingUser = ref(false)
 const posts = ref<Post[]>([])
 const users = ref<ManagedUser[]>([])
+
+const newUserForm = reactive<CreateUserPayload>({
+  username: '',
+  password: '',
+  name: '',
+  bio: '',
+})
 
 const filters = reactive({
   q: '',
@@ -75,16 +86,23 @@ async function loadPosts() {
 
 async function loadUsers() {
   userLoading.value = true
-  userErrorMessage.value = ''
+  userListErrorMessage.value = ''
 
   try {
     const response = await getUsers()
     users.value = response.items
   } catch (error) {
-    userErrorMessage.value = error instanceof Error ? error.message : '用户列表加载失败'
+    userListErrorMessage.value = error instanceof Error ? error.message : '用户列表加载失败'
   } finally {
     userLoading.value = false
   }
+}
+
+function resetNewUserForm() {
+  newUserForm.username = ''
+  newUserForm.password = ''
+  newUserForm.name = ''
+  newUserForm.bio = ''
 }
 
 async function removePost(id: number) {
@@ -114,7 +132,8 @@ async function editUsername(user: ManagedUser) {
   }
 
   updatingUserId.value = user.id
-  userErrorMessage.value = ''
+  userActionErrorMessage.value = ''
+  userSuccessMessage.value = ''
 
   try {
     await updateUserProfile(user.id, {
@@ -122,7 +141,7 @@ async function editUsername(user: ManagedUser) {
     })
     await loadUsers()
   } catch (error) {
-    userErrorMessage.value = error instanceof Error ? error.message : '用户名修改失败'
+    userActionErrorMessage.value = error instanceof Error ? error.message : '用户名修改失败'
   } finally {
     updatingUserId.value = null
   }
@@ -136,7 +155,8 @@ async function editPassword(user: ManagedUser) {
   }
 
   updatingUserId.value = user.id
-  userErrorMessage.value = ''
+  userActionErrorMessage.value = ''
+  userSuccessMessage.value = ''
 
   try {
     await updateUserPassword(user.id, {
@@ -144,7 +164,7 @@ async function editPassword(user: ManagedUser) {
     })
     await loadUsers()
   } catch (error) {
-    userErrorMessage.value = error instanceof Error ? error.message : '密码修改失败'
+    userActionErrorMessage.value = error instanceof Error ? error.message : '密码修改失败'
   } finally {
     updatingUserId.value = null
   }
@@ -160,15 +180,39 @@ async function disableUser(user: ManagedUser) {
   }
 
   updatingUserId.value = user.id
-  userErrorMessage.value = ''
+  userActionErrorMessage.value = ''
+  userSuccessMessage.value = ''
 
   try {
     await cancelUser(user.id)
     await loadUsers()
   } catch (error) {
-    userErrorMessage.value = error instanceof Error ? error.message : '用户注销失败'
+    userActionErrorMessage.value = error instanceof Error ? error.message : '用户注销失败'
   } finally {
     updatingUserId.value = null
+  }
+}
+
+async function handleCreateUser() {
+  creatingUser.value = true
+  userActionErrorMessage.value = ''
+  userSuccessMessage.value = ''
+
+  try {
+    const createdUser = await createUser({
+      username: newUserForm.username,
+      password: newUserForm.password,
+      name: newUserForm.name,
+      bio: newUserForm.bio,
+    })
+
+    resetNewUserForm()
+    userSuccessMessage.value = `已新增用户 ${createdUser.username}`
+    await loadUsers()
+  } catch (error) {
+    userActionErrorMessage.value = error instanceof Error ? error.message : '新增用户失败'
+  } finally {
+    creatingUser.value = false
   }
 }
 
@@ -264,7 +308,7 @@ onMounted(() => {
                     <strong>{{ post.title }}</strong>
                     <div class="tag-list">
                       <span v-if="post.pinned" class="pill pill--accent">置顶</span>
-                      <span v-for="tag in post.tags.slice(0, 2)" :key="tag" class="pill pill--soft">
+                      <span v-for="tag in post.tags.slice(0, 2)" :key="tag" class="pill pill--tag">
                         # {{ tag }}
                       </span>
                     </div>
@@ -320,11 +364,54 @@ onMounted(() => {
           </div>
         </div>
 
+        <form class="user-create-panel" @submit.prevent="handleCreateUser">
+          <div class="section-heading section-heading--stack">
+            <div>
+              <span class="section-kicker">新增账号</span>
+              <h3>创建新的普通用户</h3>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>用户名</span>
+              <input v-model="newUserForm.username" type="text" maxlength="24" placeholder="至少 3 个字符，且不能与现有用户名重复。"
+                required />
+            </label>
+
+            <label class="field">
+              <span>登录密码</span>
+              <input v-model="newUserForm.password" type="password" maxlength="32" placeholder="至少 6 位" required />
+            </label>
+
+            <label class="field">
+              <span>显示名</span>
+              <input v-model="newUserForm.name" type="text" maxlength="24" placeholder="例如 读书会成员" required />
+            </label>
+
+            <label class="field field--full">
+              <span>简介</span>
+              <textarea v-model="newUserForm.bio" rows="3" maxlength="120" placeholder="简单描述该用户的身份或使用场景" />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <div class="form-feedback">
+              <span v-if="userActionErrorMessage" class="form-error">{{ userActionErrorMessage }}</span>
+              <span v-else-if="userSuccessMessage" class="form-success">{{ userSuccessMessage }}</span>
+            </div>
+
+            <button type="submit" class="primary-button" :disabled="creatingUser || userLoading">
+              {{ creatingUser ? '创建中...' : '新增用户' }}
+            </button>
+          </div>
+        </form>
+
         <div v-if="userLoading" class="table-skeleton" aria-hidden="true">
           <div v-for="index in 3" :key="index" class="table-skeleton__row" />
         </div>
 
-        <EmptyState v-else-if="userErrorMessage" title="用户列表加载失败" :description="userErrorMessage" />
+        <EmptyState v-else-if="userListErrorMessage" title="用户列表加载失败" :description="userListErrorMessage" />
 
         <div v-else-if="users.length" class="table-shell table-shell--cards">
           <table class="post-table">

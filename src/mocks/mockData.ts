@@ -10,6 +10,7 @@ export interface MockDatabase {
   users: StoredUser[]
   nextPostId: number
   nextCommentId: number
+  nextUserId: number
 }
 
 function makeCover(title: string, from: string, to: string) {
@@ -616,5 +617,6 @@ export function createInitialDatabase(): MockDatabase {
     users,
     nextPostId: 11,
     nextCommentId: 21,
+    nextUserId: 5,
   }
 }

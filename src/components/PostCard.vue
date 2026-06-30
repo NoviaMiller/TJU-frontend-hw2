@@ -47,7 +47,7 @@ const visibleTags = computed(() => props.post.tags.slice(0, 3))
 
         <div class="post-card__footer">
           <div class="tag-list">
-            <span v-for="tag in visibleTags" :key="tag" class="pill pill--soft"># {{ tag }}</span>
+            <span v-for="tag in visibleTags" :key="tag" class="pill pill--tag"># {{ tag }}</span>
           </div>
 
           <RouterLink class="post-card__cta post-card__cta--island" :to="detailRoute">
